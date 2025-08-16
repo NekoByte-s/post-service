@@ -45,16 +45,33 @@ func main() {
 	postService := service.NewPostService(repo)
 	postHandler := handlers.NewPostHandler(postService)
 
+	// Initialize health service and handler
+	healthService := service.NewHealthService(db, "1.0.0")
+	healthHandler := handlers.NewHealthHandler(healthService)
+
 	router := gin.Default()
 
+	// API endpoints
 	v1 := router.Group("/api/v1")
 	{
+		// Post endpoints
 		v1.POST("/posts", postHandler.CreatePost)
 		v1.GET("/posts", postHandler.GetAllPosts)
 		v1.GET("/posts/:id", postHandler.GetPost)
 		v1.PUT("/posts/:id", postHandler.UpdatePost)
 		v1.DELETE("/posts/:id", postHandler.DeletePost)
+		
+		// Health endpoints
+		v1.GET("/health", healthHandler.GetHealth)           // GET /api/v1/health
+		v1.GET("/health/live", healthHandler.GetLiveness)    // GET /api/v1/health/live
+		v1.GET("/health/ready", healthHandler.GetReadiness)  // GET /api/v1/health/ready
+		v1.GET("/health/ping", healthHandler.GetHealthSimple) // GET /api/v1/health/ping
+		v1.GET("/health/component/:component", healthHandler.GetComponentHealth) // GET /api/v1/health/component/{name}
 	}
+
+	// Keep infrastructure health endpoints for Kubernetes probes (no versioning)
+	router.GET("/health/live", healthHandler.GetLiveness)
+	router.GET("/health/ready", healthHandler.GetReadiness)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
