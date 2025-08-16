@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: post-service
+  namespace: post-service-prod
+  labels:
+    app: post-service
+    environment: production
+spec:
+  selector:
+    app: post-service
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-service
+  namespace: post-service-dev
+  labels:
+    app: post-service
+    environment: development
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: post-service
+  template:
+    metadata:
+      labels:
+        app: post-service
+        environment: development
+    spec:
+      containers:
+      - name: post-service
+        image: post-service:dev
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: post-service-config
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/posts
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/posts
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
